@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Book Appointment | Endo Spine Centre, Chennai</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html"><span>Endo Spine Centre<small>Chennai</small></span></a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu"><span></span></button>
+    <nav class="site-nav" id="site-nav">
+      <a href="index.html">Home</a>
+      <a href="index.html#conditions">Conditions</a>
+      <a href="index.html#about">About</a>
+      <a class="btn" href="booking.html">Book appointment</a>
+    </nav>
+  </header>
+
+  <main class="booking">
+    <section class="booking-intro">
+      <h1>Book your consultation</h1>
+      <p class="lead">Pick a day and time that suits you. The clinic will call to confirm your slot.</p>
+      <p class="label">Clinic hours</p>
+      <ul class="hours" id="clinic-hours"></ul>
+    </section>
+
+    <section class="booking-form">
+      <form id="booking-form">
+        <div class="form-step">
+          <p class="step-title"><span>1</span>Your details</p>
+          <label>Full name
+            <input type="text" name="name" required autocomplete="name">
+          </label>
+          <label>Phone number
+            <input type="tel" name="phone" required autocomplete="tel-national" inputmode="numeric" pattern="[0-9]{10}" title="Enter a 10-digit mobile number">
+          </label>
+        </div>
+
+        <div class="form-step">
+          <p class="step-title"><span>2</span>Pick a slot</p>
+          <label>Preferred date
+            <input type="date" name="date" required>
+          </label>
+          <div>
+            <p class="field-label">Preferred time</p>
+            <div class="slots" id="slots" role="radiogroup" aria-label="Preferred time"></div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <p class="step-title"><span>3</span>Your concern <em>(optional)</em></p>
+          <select name="concern" aria-label="Concern">
+            <option value="">Select a concern</option>
+            <option>Slip disc</option>
+            <option>Sciatica</option>
+            <option>Spinal stenosis</option>
+            <option>Neck pain</option>
+            <option>Lower back pain</option>
+            <option>Not sure</option>
+          </select>
+          <textarea name="description" rows="4" aria-label="Describe your concern" placeholder="Briefly describe your symptoms, how long you have had them, and any previous treatment or scans."></textarea>
+        </div>
+
+        <button class="btn" type="submit">Book appointment</button>
+        <p class="form-error" role="alert" hidden>We could not send your request. Please try again in a moment.</p>
+      </form>
+
+      <div class="success" role="status" hidden>
+        <h2>Request sent</h2>
+        <p id="success-summary"></p>
+        <a class="btn" href="index.html">Back to home</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="menu.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
