@@ -9,13 +9,14 @@
   --blush: #fbf6f4;
   --muted: #6b5a76;
   --soft: #cdb8dc;
+  --gap: 1.5rem; /* space between sections */
 }
 
 /* ---------- Base ---------- */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 [hidden] { display: none !important; }
 
-html { scroll-behavior: smooth; scroll-padding-top: 6rem; }
+html { scroll-behavior: smooth; scroll-padding-top: 4rem; }
 
 body {
   font-family: "DM Sans", system-ui, sans-serif;
@@ -39,6 +40,10 @@ a { color: inherit; text-decoration: none; }
 .container { width: calc(100% - 2rem); margin-inline: auto; }
 .label { margin-bottom: 1rem; font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--muted); }
 .lead { max-width: 34ch; margin: 1.25rem 0 1.75rem; font-size: 1.15rem; color: var(--muted); }
+
+/* Every section after the hero uses the same gap */
+.conditions, .about { padding-top: var(--gap); }
+.cta { padding-block: var(--gap); }
 
 /* ---------- Shared components ---------- */
 
@@ -96,7 +101,7 @@ a { color: inherit; text-decoration: none; }
 /* ---------- Hero (phone: spine is a background behind the text) ---------- */
 .hero { position: relative; overflow: hidden; }
 .hero .container {
-  position: relative; display: grid; align-items: end; min-height: 34rem;
+  position: relative; display: grid; align-items: end; min-height: 26rem;
   margin-top: 5.5rem; padding: 0; overflow: hidden; border-radius: 32px;
 }
 .hero-art {
@@ -104,7 +109,7 @@ a { color: inherit; text-decoration: none; }
   background: radial-gradient(circle at 70% 30%, var(--plum-2), var(--night) 75%);
 }
 .spine {
-  position: absolute; right: -2.5rem; top: 50%; height: 92%; width: auto;
+  position: absolute; right: -2.5rem; top: 50%; height: 105%; width: auto;
   transform: translateY(-50%); opacity: 0.45; overflow: visible;
 }
 .hero-copy { position: relative; padding: 2rem 1.5rem 2.25rem; color: #fff; }
@@ -133,7 +138,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ---------- About ---------- */
-.about { padding-block: 0 1.5rem; }
+.about .intro { margin-bottom: 1.5rem; }
 .about-card { display: grid; gap: 1rem; }
 
 .portrait img {
@@ -161,13 +166,12 @@ a { color: inherit; text-decoration: none; }
 .credentials strong { display: block; font-weight: 600; line-height: 1.3; }
 .credentials span { display: block; margin-top: 0.15rem; font-size: 0.85rem; line-height: 1.4; color: var(--muted); }
 
-/* ---------- Conditions (phone: centered, auto-advancing carousel) ---------- */
-.conditions { padding-block: 2.5rem 0.5rem; }
+/* ---------- Conditions (phone: centered, auto-advancing, looping carousel) ---------- */
 .conditions .container { display: grid; gap: 2rem; }
 .conditions .intro p:not(.label) { margin-top: 1rem; color: var(--muted); }
 .cards {
-  position: relative; display: flex; gap: 1rem; margin-inline: -1rem; padding: 1.5rem 11vw 5rem; margin-block: -1.25rem -3rem;
-  overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; counter-reset: condition;
+  position: relative; display: flex; gap: 1rem; margin-inline: -1rem; padding: 1.5rem 11vw 3rem; margin-block: -1.25rem -3rem;
+  overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none;
 }
 .cards::-webkit-scrollbar { display: none; }
 .card {
@@ -177,10 +181,10 @@ a { color: inherit; text-decoration: none; }
     radial-gradient(14rem 10rem at 100% 0, rgba(217, 167, 255, 0.3), transparent 70%),
     linear-gradient(160deg, var(--plum-2), var(--night));
   box-shadow: 0 14px 32px rgba(74, 29, 99, 0.22);
-  counter-increment: condition; transition: transform 0.2s;
+  transition: transform 0.2s;
 }
 .card::before {
-  content: counter(condition, decimal-leading-zero);
+  content: attr(data-n); /* number is set by carousel.js */
   font: 500 2.25rem/1 "Playfair Display", serif; color: rgba(217, 167, 255, 0.35);
 }
 .card span { justify-self: end; padding: 0.25rem 0.7rem; border-radius: 999px; background: rgba(255, 255, 255, 0.12); font-size: 0.75rem; color: var(--soft); }
@@ -188,7 +192,6 @@ a { color: inherit; text-decoration: none; }
 .card p { grid-column: 1 / -1; color: var(--soft); font-size: 0.95rem; }
 
 /* ---------- Call to action ---------- */
-.cta { padding-block: 0.5rem 3rem; }
 .cta .container {
   padding: 2.5rem 1.5rem; border-radius: 32px; color: #fff;
   background:
@@ -315,7 +318,8 @@ form .btn:disabled { opacity: 0.7; cursor: wait; }
 
 /* ---------- Desktop (861px and up) ---------- */
 @media (min-width: 861px) {
-  html { scroll-padding-top: 0; }
+  :root { --gap: 2.5rem; }
+  html { scroll-padding-top: 3.5rem; }
   .container { width: min(1180px, 100% - 2.5rem); }
   .lead { margin: 1.5rem 0 2rem; font-size: 1.2rem; }
   .btn:hover { transform: translateY(-2px); background: var(--plum-2); }
@@ -358,18 +362,17 @@ form .btn:disabled { opacity: 0.7; cursor: wait; }
   }
   .trust li { padding: 0; background: none; border: 0; box-shadow: none; font-size: 1rem; }
 
-  .about { padding-block: 3rem 2rem; }
+  .about .intro { margin-bottom: 2rem; }
   .about-card { grid-template-columns: 0.8fr 1.4fr; gap: 1.5rem; align-items: stretch; }
   .portrait img { height: 100%; max-height: none; aspect-ratio: auto; }
   .about-body { padding: 2.5rem; }
 
-  .conditions { padding-block: 4rem; }
   .conditions .container { grid-template-columns: 1fr 2fr; align-items: start; gap: 3rem; }
   .cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; margin: 0; padding: 0; overflow: visible; }
   .card { padding: 1.75rem; }
   .card:hover { transform: translateY(-4px); }
+  .card[data-clone] { display: none; } /* loop copies are for the phone carousel only */
 
-  .cta { padding-block: 2rem 5rem; }
   .cta .container { padding: 4rem; }
 
   .site-footer { padding: 3.5rem 0 1.25rem; }
