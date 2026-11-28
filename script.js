@@ -6,6 +6,7 @@ const submitLabel = submitButton.textContent;
 const slotsBox = document.getElementById("slots");
 const dateInput = form.elements.date;
 const phoneInput = form.elements.phone;
+const DEFAULT_ERROR = errorMessage.textContent;
 
 // Phone: digits only, exactly 10 (the pattern on the input enforces this on submit).
 phoneInput.addEventListener("input", () => {
@@ -39,10 +40,11 @@ function availableSlots(value) {
   return slotsFor(hours, earliest);
 }
 
-function showSuccess({ name, phone, date, time }) {
+function showSuccess({ name, phone, email, date, time }) {
   document.getElementById("success-summary").textContent =
     `Thank you, ${name}. We have received your request for ${formatDate(date)} at ${time}. ` +
-    `The clinic will call you on ${phone} to confirm your slot.`;
+    `The clinic will call you on ${phone} to confirm your slot.` +
+    (email ? ` Once confirmed, we will also email you at ${email}.` : "");
   form.hidden = true;
   success.hidden = false;
   success.scrollIntoView();
@@ -54,22 +56,78 @@ document.getElementById("clinic-hours").innerHTML = CLINIC_HOURS.map(
 
 dateInput.min = toDateValue(new Date());
 
-// Time chips are always visible. They stay greyed out until a date is chosen.
-function renderSlots(slots, enabled) {
-  slotsBox.innerHTML = slots.length
-    ? slots.map((slot) => `<label class="slot"><input type="radio" name="time" value="${slot}" required${enabled ? "" : " disabled"}><span>${slot}</span></label>`).join("")
-    : `<p class="slots-empty">No slots left, pick another date</p>`;
+// ---------- Time slots ----------
+// The whole time section stays hidden until a date is picked.
+const timePicker = document.getElementById("time-picker");
+
+const statusBox = (text, { loading = false, error = false } = {}) =>
+  `<p class="tp-status${error ? " is-error" : ""}" role="${error ? "alert" : "status"}">` +
+  `${loading ? '<span class="tp-spinner" aria-hidden="true"></span>' : ""}${text}</p>`;
+
+// One row per hour: a label on the left, then a chip for each slot (4:00, 4:15, 4:30, 4:45).
+// Booked (or already past) times stay in place but are greyed out and cannot be picked.
+function renderSlots(slots, open) {
+  if (!open.size) {
+    slotsBox.innerHTML = statusBox("No slots left on this date. Please pick another.");
+    return;
+  }
+  const perHour = Math.ceil(60 / SLOT_MINUTES);
+  const groups = new Map();
+  slots.forEach((slot) => {
+    const [, hour, minutes, period] = /^(\d{1,2}):(\d{2}) (AM|PM)$/.exec(slot);
+    const key = `${hour} ${period}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push({ slot, time: `${hour}:${minutes}`, minutes });
+  });
+  slotsBox.innerHTML = `<div class="tp-groups">` + [...groups].map(([hour, items]) =>
+    `<div class="tp-group"><span class="tp-hour">${hour}</span><div class="tp-row" style="--cols:${perHour}">` +
+    items.map(({ slot, time, minutes }) => {
+      const free = open.has(slot);
+      return `<label class="tp-chip" style="grid-column:${Number(minutes) / SLOT_MINUTES + 1}"${free ? "" : ' title="Not available"'}>` +
+        `<input type="radio" name="time" value="${slot}" aria-label="${slot}${free ? "" : " (not available)"}"${free ? " required" : " disabled"}>` +
+        `<span>${time}</span></label>`;
+    }).join("") +
+    `</div></div>`
+  ).join("") + `</div>`;
 }
 
-const defaultSlots = slotsFor(CLINIC_HOURS[0]);
-renderSlots(defaultSlots, false);
+// Ask the Google Sheet which times are already taken on a date.
+async function fetchBooked(date) {
+  const response = await fetch(`${APPS_SCRIPT_URL}?date=${encodeURIComponent(date)}`);
+  const result = await response.json();
+  return result.booked || [];
+}
+
+// Show the section with a "checking" box, then replace it with the free times.
+let loadToken = 0;
+async function loadSlots(date) {
+  const token = ++loadToken;
+  dateInput.setCustomValidity("");
+  timePicker.hidden = false;
+  slotsBox.innerHTML = statusBox("Checking availability…", { loading: true });
+  try {
+    const booked = await fetchBooked(date);
+    if (token !== loadToken) return; // a newer date was picked meanwhile
+    const everySlot = slotsFor(CLINIC_HOURS.find(({ days }) => days.includes(parseDate(date).getDay())));
+    const open = new Set(availableSlots(date).filter((slot) => !booked.includes(slot)));
+    renderSlots(everySlot, open);
+    dateInput.setCustomValidity(open.size ? "" : "No slots left on this date. Please pick another.");
+  } catch {
+    if (token !== loadToken) return;
+    slotsBox.innerHTML = statusBox("Could not check availability. Please pick the date again.", { error: true });
+    dateInput.setCustomValidity("Could not check availability. Please try again.");
+  }
+}
 
 dateInput.addEventListener("change", () => {
-  const hasDate = Boolean(dateInput.value);
-  const slots = hasDate ? availableSlots(dateInput.value) : defaultSlots;
-  renderSlots(slots, hasDate);
-  // A date with no slots left cannot be submitted.
-  dateInput.setCustomValidity(!hasDate || slots.length ? "" : "No slots left on this date. Please pick another.");
+  if (!dateInput.value) {
+    loadToken++;
+    dateInput.setCustomValidity("");
+    timePicker.hidden = true;
+    slotsBox.innerHTML = "";
+    return;
+  }
+  loadSlots(dateInput.value);
 });
 
 form.addEventListener("submit", async (event) => {
@@ -80,25 +138,37 @@ form.addEventListener("submit", async (event) => {
   submitButton.textContent = "Sending…";
 
   try {
-    const response = await fetch(`https://formsubmit.co/ajax/${BOOKING_EMAIL}`, {
+    // text/plain avoids a CORS preflight, which Apps Script does not answer.
+    const response = await fetch(APPS_SCRIPT_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({
-        _subject: `New appointment request: ${data.name}`,
-        _template: "table",
-        _captcha: "false",
-        Name: data.name,
-        Phone: data.phone,
-        Date: formatDate(data.date),
-        Time: data.time,
-        Concern: data.concern || "Not specified",
-        Description: data.description || "None",
+        name: data.name,
+        phone: data.phone,
+        email: data.email || "",
+        date: data.date,
+        time: data.time,
+        concern: data.concern || "",
+        description: data.description || "",
       }),
     });
     const result = await response.json();
-    if (!response.ok || String(result.success) !== "true") throw new Error(result.message);
-    showSuccess(data);
+
+    if (result.ok) {
+      showSuccess(data);
+      return;
+    }
+    if (result.error === "taken") {
+      errorMessage.textContent = "Sorry, that time was just booked. Please choose another slot.";
+      loadSlots(data.date);
+    } else if (result.error === "limit") {
+      errorMessage.textContent = "You already have a request for this day. Please call the clinic to change it.";
+    } else {
+      errorMessage.textContent = DEFAULT_ERROR;
+    }
+    throw new Error(result.error);
   } catch {
+    if (errorMessage.textContent === "") errorMessage.textContent = DEFAULT_ERROR;
     errorMessage.hidden = false;
     submitButton.disabled = false;
     submitButton.textContent = submitLabel;

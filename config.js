@@ -1,6 +1,7 @@
-const CLINIC_WHATSAPP = "9176222561"; // country code + number, no "+"
+const CLINIC_WHATSAPP = "919342919485"; // country code + number, no "+"
 const BOOKING_EMAIL = "anushkabisani@gmail.com"; // receives booking requests
-const SLOT_MINUTES = 30;
+const SLOT_MINUTES = 15;
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwW9tWgdTthX1uYV4X5f3hGgf8cm0pI7ZQb8tI_iQF6jQqXtV09XJImJmTEUnQeOiBS9g/exec";
 
 // Opening hours. days: 0 = Sunday ... 6 = Saturday. open/close are 24-hour clock hours.
 const CLINIC_HOURS = [

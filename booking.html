@@ -39,6 +39,9 @@
           <label>Phone number
             <input type="tel" name="phone" required autocomplete="tel-national" inputmode="numeric" pattern="[0-9]{10}" title="Enter a 10-digit mobile number">
           </label>
+          <label>Email (optional)
+            <input type="email" name="email" autocomplete="email" inputmode="email">
+          </label>
         </div>
 
         <div class="form-step">
@@ -46,9 +49,9 @@
           <label>Preferred date
             <input type="date" name="date" required>
           </label>
-          <div>
+          <div class="time-picker" id="time-picker" hidden>
             <p class="field-label">Preferred time</p>
-            <div class="slots" id="slots" role="radiogroup" aria-label="Preferred time"></div>
+            <div id="slots" role="group" aria-label="Preferred time"></div>
           </div>
         </div>
 
